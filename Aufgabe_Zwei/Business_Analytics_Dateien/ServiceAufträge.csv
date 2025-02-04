@@ -1,0 +1,14 @@
+﻿Auftrag;Kalibrierung;Wartung;Inbetriebnahme;Berechnung;Fluxflussprüfung;Erweiterung
+2;0;1;1;1;0;Typ B
+3;0;1;1;0;1;0
+4;0;1;1;0;1;Typ A
+5;0;0;1;0;0;Typ A
+6;0;0;1;1;1;0
+7;0;0;1;1;0;0
+8;1;1;0;0;1;Typ A
+9;0;1;1;1;0;Typ A
+10;1;1;0;1;1;Typ B
+12;0;1;1;1;0;Typ A, Typ B
+13;1;0;0;1;0;Typ A, Typ B
+14;0;0;0;1;1;Typ B
+15;0;1;0;0;1;0

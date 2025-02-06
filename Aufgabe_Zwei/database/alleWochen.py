@@ -124,7 +124,7 @@ class DB_Handler:
 
 if __name__ == "__main__":
     # Pfad zur Arbeitszeiten CSV-Datei
-    CSV_PATH = r'Business_Analytics_Dateien\Arbeitszeiten.csv'
+    CSV_PATH = r'..\Business_Analytics_Dateien\Arbeitszeiten.csv'
 
     # Initialisiere die Arbeitszeiten-Verarbeitungsklasse
     processor = Arbeitszeiten_ETL_Handler(CSV_PATH)

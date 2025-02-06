@@ -44,6 +44,9 @@ class Arbeitszeiten_ETL_Handler:
         """
             Transformiert die Arbeitszeitdaten und berechnet zusätzliche Werte.
         """
+        # Kopiere den DataFrame, um Fragmentierung zu vermeiden
+        self._df = self._df.copy()
+
         # Füge eine Spalte 'id' hinzu, die eine eindeutige ID für jede Zeile enthält
         self._df.insert(0, 'id', range(1, 1 + len(self._df)))
 

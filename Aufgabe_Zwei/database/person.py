@@ -2,9 +2,9 @@ import os
 import sqlite3
 import pandas as pd
 
-class Arbeitszeiten_ETL_Handler:
+class Personen_ETL_Handler:
     """
-        Klasse zum Einlesen einer CSV-Datei mit Arbeitszeiten und Speichern der Daten in einer SQLite-Datenbank.
+        Klasse zum Einlesen einer CSV-Datei mit Personendaten und Speichern der Daten in einer SQLite-Datenbank.
     :param _csv_path: Pfad zur CSV-Datei
     :param _df: DataFrame mit den Daten aus der CSV-Datei
     """
@@ -16,15 +16,10 @@ class Arbeitszeiten_ETL_Handler:
         """
             Initialisiert die Klasse mit dem Pfad zur CSV-Datei. 
 
-        :param _csv_path: Pfad zur CSV-Datei, welche die Arbeitszeiten enthält
+        :param _csv_path: Pfad zur CSV-Datei, welche die Personendaten enthält
         """
         self._csv_path = os.path.abspath(_csv_path)
         self.extract()
-
-        # Bereinigung der Dezimalzahlen (Komma durch Punkt ersetzen)
-        for column in self._df.columns[1:]:  # Spalte 0 ist der Name, daher beginnen wir mit der 1.
-            self._df[column] = self._df[column].str.replace(',', '.').astype(float)
-
         self.transform()
 
     # extract ---------------------------------------------------------------------------------------------------------
@@ -40,46 +35,44 @@ class Arbeitszeiten_ETL_Handler:
 
     # transform ---------------------------------------------------------------------------------------------------------
 
-def transform(self) -> None:
-    """
-        Transformiert die Personendaten und berechnet zusätzliche Werte.
-    """
-    # Kopiere den DataFrame, um Fragmentierung zu vermeiden
-    self._df = self._df.copy()
+    def transform(self) -> None:
+        """
+            Transformiert die Personendaten und berechnet zusätzliche Werte.
+        """
+        # Kopiere den DataFrame, um Fragmentierung zu vermeiden
+        self._df = self._df.copy()
 
-    # Füge eine Spalte 'ID' hinzu, die eine eindeutige ID für jede Zeile enthält
-    self._df.insert(0, 'ID', range(1, 1 + len(self._df)))
+        # Umbenennen der Spalte 'ID' aus der CSV-Datei in 'personID'
+        if 'ID' in self._df.columns:
+            self._df = self._df.rename(columns={'ID': 'personID'})
+            
+        # Füge eine Spalte 'id' hinzu, die eine eindeutige ID für jede Zeile enthält
+        self._df.insert(0, 'ID', range(1, 1 + len(self._df)))            
 
-    # Umbenennen der Spalte 'ID' aus der CSV-Datei in 'personID'
-    if 'ID' in self._df.columns:
-        self._df = self._df.rename(columns={'ID': 'personID'})
-        
-    self._df = self._df[['ID', 'personID', 'Name', 'Alter']]        
+        # Bereinigung von Leerzeichen und Umwandlung von NA-Werten
+        self._df = self._df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+        self._df = self._df.fillna('Unbekannt')
 
-    # Bereinigung von Leerzeichen und Umwandlung von NA-Werten
-    self._df = self._df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-    self._df = self._df.fillna('Unbekannt')
+        # Zähle die Vorkommen jedes Namens
+        name_counts = self._df['Name'].value_counts()
 
-    # Zähle die Vorkommen jedes Namens
-    name_counts = self._df['Name'].value_counts()
+        # Falls ein Name doppelt vorkommt, füge Nummern hinzu
+        name_tracker = {}
 
-    # Falls ein Name doppelt vorkommt, füge Nummern hinzu
-    name_tracker = {}
+        def modify_name(name):
+            if name_counts[name] > 1:  # Nur für doppelte Namen Nummern hinzufügen
+                if name in name_tracker:
+                    name_tracker[name] += 1
+                else:
+                    name_tracker[name] = 1
+                return f"{name}{name_tracker[name]}"
+            return name  # Falls der Name einzigartig ist, bleibt er unverändert
 
-    def modify_name(name):
-        if name_counts[name] > 1:  # Nur für doppelte Namen Nummern hinzufügen
-            if name in name_tracker:
-                name_tracker[name] += 1
-            else:
-                name_tracker[name] = 1
-            return f"{name}{name_tracker[name]}"
-        return name  # Falls der Name einzigartig ist, bleibt er unverändert
+        self._df['Name'] = self._df['Name'].astype(str).apply(modify_name)
 
-    self._df['Name'] = self._df['Name'].astype(str).apply(modify_name)
-
-    # Setzen des Index auf die 'personID' Spalte
-    if 'personID' in self._df.columns:
-        self._df = self._df.set_index('personID')
+        # Setzen des Index auf die 'personID' Spalte
+        if 'personID' in self._df.columns:
+            self._df = self._df.set_index('personID')
 
     # load ---------------------------------------------------------------------------------------------------------
 
@@ -95,12 +88,13 @@ def transform(self) -> None:
         :param table_name: Name der Tabelle in der SQLite-Datenbank
         """
         with sqlite3.connect(db_name) as connection:
-            self._df_avg.to_sql(
+            self._df.to_sql(
                 table_name, connection, if_exists='replace', index=True)
             connection.commit()
 
 
 class DB_Handler:
+    @staticmethod
     def show_db(
             db_name: str,
             table_name: str
@@ -121,15 +115,15 @@ class DB_Handler:
 # Main ---------------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # Pfad zur Arbeitszeiten CSV-Datei
-    CSV_PATH = r'..\Business_Analytics_Dateien\Arbeitszeiten.csv'
+    # Pfad zur Personen CSV-Datei
+    CSV_PATH = r'..\Business_Analytics_Dateien\Personen.csv'
 
-    # Initialisiere die Arbeitszeiten-Verarbeitungsklasse
-    processor = Arbeitszeiten_ETL_Handler(CSV_PATH)
+    # Initialisiere die Personen-Verarbeitungsklasse
+    processor = Personen_ETL_Handler(CSV_PATH)
 
     # Pfad zur SQLite-Datenbank im gleichen Ordner wie das Skript
-    DB_PATH = os.path.join(os.path.dirname(__file__), "arbeitszeitenWeek.db")
-    TABLE_NAME = "Arbeitszeiten_Tabelle"
+    DB_PATH = os.path.join(os.path.dirname(__file__), "personen.db")
+    TABLE_NAME = "Personen_Tabelle"
 
     # Speichert die Daten in der SQLite-Datenbank
     processor.save_to_db(DB_PATH, TABLE_NAME)

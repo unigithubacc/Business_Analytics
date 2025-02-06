@@ -40,46 +40,51 @@ class Arbeitszeiten_ETL_Handler:
 
     # transform ---------------------------------------------------------------------------------------------------------
 
-def transform(self) -> None:
-    """
-        Transformiert die Personendaten und berechnet zusätzliche Werte.
-    """
-    # Kopiere den DataFrame, um Fragmentierung zu vermeiden
-    self._df = self._df.copy()
+    def transform(self) -> None:
+        """
+            Transformiert die Arbeitszeitdaten und berechnet zusätzliche Werte.
+        """
+        # Kopiere den DataFrame, um Fragmentierung zu vermeiden
+        self._df = self._df.copy()
 
-    # Füge eine Spalte 'ID' hinzu, die eine eindeutige ID für jede Zeile enthält
-    self._df.insert(0, 'ID', range(1, 1 + len(self._df)))
+        # Füge eine Spalte 'id' hinzu, die eine eindeutige ID für jede Zeile enthält
+        self._df.insert(0, 'ID', range(1, 1 + len(self._df)))
 
-    # Umbenennen der Spalte 'ID' aus der CSV-Datei in 'personID'
-    if 'ID' in self._df.columns:
-        self._df = self._df.rename(columns={'ID': 'personID'})
+        # Umwandeln der Datumsformat-Spalten in Wochentage (nur ab der zweiten Spalte)
+        self._df.columns = ['ID', 'Name'] + [pd.to_datetime(col, format='%d.%m.%Y').strftime('%A') for col in self._df.columns[2:]]
+
+        # Zähle die Vorkommen jedes Namens
+        name_counts = self._df['Name'].value_counts()
         
-    self._df = self._df[['ID', 'personID', 'Name', 'Alter']]        
+        # Falls ein Name doppelt vorkommt, füge Nummern hinzu
+        name_tracker = {}
+        
+        def modify_name(name):
+            if name_counts[name] > 1:  # Nur für doppelte Namen Nummern hinzufügen
+                if name in name_tracker:
+                    name_tracker[name] += 1
+                else:
+                    name_tracker[name] = 1
+                return f"{name}{name_tracker[name]}"
+            return name  # Falls der Name einzigartig ist, bleibt er unverändert
 
-    # Bereinigung von Leerzeichen und Umwandlung von NA-Werten
-    self._df = self._df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-    self._df = self._df.fillna('Unbekannt')
+        self._df['Name'] = self._df['Name'].astype(str).apply(modify_name)
 
-    # Zähle die Vorkommen jedes Namens
-    name_counts = self._df['Name'].value_counts()
+        # Setzen des Index auf die 'id' Spalte
+        self._df = self._df.set_index('ID')
 
-    # Falls ein Name doppelt vorkommt, füge Nummern hinzu
-    name_tracker = {}
+        # Umwandeln der Daten in ein langes Format (Melt)
+        self._df_long = self._df.reset_index().melt(id_vars=['ID', 'Name'], var_name='Wochentag', value_name='Arbeitszeit')
 
-    def modify_name(name):
-        if name_counts[name] > 1:  # Nur für doppelte Namen Nummern hinzufügen
-            if name in name_tracker:
-                name_tracker[name] += 1
-            else:
-                name_tracker[name] = 1
-            return f"{name}{name_tracker[name]}"
-        return name  # Falls der Name einzigartig ist, bleibt er unverändert
+        # Gruppieren nach Woche und Berechnung des Durchschnitts
+        self._df_long['Week'] = (self._df_long.groupby(['ID', 'Name']).cumcount() // 5) + 1
+        self._df_avg = self._df_long.groupby(['ID', 'Name', 'Week'])['Arbeitszeit'].mean().unstack()
 
-    self._df['Name'] = self._df['Name'].astype(str).apply(modify_name)
+        # Umbenennen der Spalten in "Week 1", "Week 2", usw.
+        self._df_avg.columns = [f'Week_{i}' for i in self._df_avg.columns]
 
-    # Setzen des Index auf die 'personID' Spalte
-    if 'personID' in self._df.columns:
-        self._df = self._df.set_index('personID')
+        # Runden der Werte auf zwei Nachkommastellen
+        self._df_avg = self._df_avg.round(2)
 
     # load ---------------------------------------------------------------------------------------------------------
 

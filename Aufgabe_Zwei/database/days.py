@@ -48,10 +48,10 @@ class Arbeitszeiten_ETL_Handler:
         self._df = self._df.copy()
 
         # Füge eine Spalte 'id' hinzu, die eine eindeutige ID für jede Zeile enthält
-        self._df.insert(0, 'id', range(1, 1 + len(self._df)))
+        self._df.insert(0, 'ID', range(1, 1 + len(self._df)))
 
         # Umwandeln der Datumsformat-Spalten in Wochentage (nur ab der zweiten Spalte)
-        self._df.columns = ['id', 'Name'] + [pd.to_datetime(col, format='%d.%m.%Y').strftime('%A') for col in self._df.columns[2:]]
+        self._df.columns = ['ID', 'Name'] + [pd.to_datetime(col, format='%d.%m.%Y').strftime('%A') for col in self._df.columns[2:]]
 
         # Zähle die Vorkommen jedes Namens
         name_counts = self._df['Name'].value_counts()
@@ -71,13 +71,13 @@ class Arbeitszeiten_ETL_Handler:
         self._df['Name'] = self._df['Name'].astype(str).apply(modify_name)
 
         # Setzen des Index auf die 'id' Spalte
-        self._df = self._df.set_index('id')
+        self._df = self._df.set_index('ID')
 
         # Umwandeln der Daten in ein langes Format (Melt)
-        self._df_long = self._df.reset_index().melt(id_vars=['id', 'Name'], var_name='Wochentag', value_name='Arbeitszeit')
+        self._df_long = self._df.reset_index().melt(id_vars=['ID', 'Name'], var_name='Wochentag', value_name='Arbeitszeit')
 
         # Berechnung der durchschnittlichen Arbeitszeit pro Wochentag
-        self._df_avg = self._df_long.groupby(['id', 'Name', 'Wochentag'])['Arbeitszeit'].mean().unstack()
+        self._df_avg = self._df_long.groupby(['ID', 'Name', 'Wochentag'])['Arbeitszeit'].mean().unstack()
 
         # Umbenennen der Spalten in die gewünschten Wochentage
         self._df_avg.columns = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     processor = Arbeitszeiten_ETL_Handler(CSV_PATH)
 
     # Pfad zur SQLite-Datenbank im gleichen Ordner wie das Skript
-    DB_PATH = os.path.join(os.path.dirname(__file__), "arbeitszeiten.db")
+    DB_PATH = os.path.join(os.path.dirname(__file__), "arbeitszeitenDays.db")
     TABLE_NAME = "Arbeitszeiten_Tabelle"
 
     # Speichert die Daten in der SQLite-Datenbank

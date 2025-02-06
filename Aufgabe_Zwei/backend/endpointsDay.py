@@ -1,20 +1,16 @@
 import os
-import re
-from turtle import up, update
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy import create_engine, Column, Integer, String, Float, func
+from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.future import select
 from typing import List
 
 # Absolute path to the database file
-DATABASE_PATH = os.path.join(
-    os.getcwd(), 'backend', 'database', 'arbeitszeiten.db'
-)
+DATABASE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "arbeitszeitenDays.db")
 
-# database URL to the absolute path
+# Database URL to the absolute path
 DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_PATH}"
 
 # Set up the database connection
@@ -26,17 +22,20 @@ Base = declarative_base()
 # Define the model for your table
 
 
-class arbeitszeiten(Base):
+class ArbeitszeitenDays(Base):
     """
-        Definition der Tabelle arbeitszeiten
-
+    Definition der Tabelle arbeitszeitenDays
     """
+    __tablename__ = "Arbeitszeiten_Tabelle"
 
-    __tablename__ = "arbeitszeiten"
-
-    # Country als Primärschlüssel
-    Country = Column(String, primary_key=True, index=True)
-    Average_Monthly_Income = Column(Float)
+    ID = Column(Integer, primary_key=True, index=True)
+    Name = Column(String)
+    Monday = Column(Float)
+    Tuesday = Column(Float)
+    Wednesday = Column(Float)
+    Thursday = Column(Float)
+    Friday = Column(Float)
+    Week = Column(Float)
 
 
 # Initialize the router for FastAPI
@@ -47,26 +46,23 @@ router = APIRouter()
 
 async def get_db():
     """
-        Dependency um die Datenbankverbindung zu erhalten
-
+    Dependency um die Datenbankverbindung zu erhalten
     :yield: die Datenbankverbindung
     """
-
     async with SessionLocal() as session:
         yield session
 
+# Endpoint to get all columns and values from the arbeitszeitenDays table
 
-# OUTDATED
-@router.get("/average-income")
-async def get_average_monthly_income(session: AsyncSession = Depends(get_db)):
+
+@router.get("/arbeitszeiten-days")
+async def get_arbeitszeiten_days(session: AsyncSession = Depends(get_db)):
     """
-        Endpoint to get Average_Monthly_Income for all Countries
-
+    Endpoint to get all columns and values from the arbeitszeitenDays table
     :returns: Das ergebnis der Abfrage
     """
-
-    query = select(arbeitszeiten.Country,
-                   arbeitszeiten.Average_Monthly_Income)
+    query = select(ArbeitszeitenDays.ID, ArbeitszeitenDays.Name, ArbeitszeitenDays.Monday,
+                   ArbeitszeitenDays.Tuesday, ArbeitszeitenDays.Wednesday, ArbeitszeitenDays.Thursday, ArbeitszeitenDays.Friday, ArbeitszeitenDays.Week)
     result = await session.execute(query)
     data = result.fetchall()
 
@@ -74,10 +70,15 @@ async def get_average_monthly_income(session: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No data found.")
 
     return [
-        {
-            "Country": row[0],
-            "Average_Monthly_Income": row[1]
-        }
+        {"ID": row[0],
+         "Name": row[1],
+         "Monday": row[2],
+         "Tuesday": row[3],
+         "Wednesday": row[4],
+         "Thursday": row[5],
+         "Friday": row[6],
+         "Week": row[6]
+
+         }
         for row in data
     ]
-

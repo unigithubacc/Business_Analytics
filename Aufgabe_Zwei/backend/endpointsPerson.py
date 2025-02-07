@@ -1,60 +1,137 @@
 import os
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy import create_engine, Column, Integer, String, Float
+from fastapi import APIRouter, HTTPException, Depends, FastAPI
+from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from typing import List
 
-# Zweite Datenbank
-DATABASE_PATH_3 = os.path.join(os.getcwd(), 'Business_Analytics-1', 'Aufgabe_Zwei', 'database', 'person.db')
+# Database configuration
+DATABASE_PATH_2 = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "arbeitszeitenWeek.db")
+DATABASE_URL_2 = f"sqlite+aiosqlite:///{DATABASE_PATH_2}"
+engine_2 = create_async_engine(DATABASE_URL_2, echo=True)
+SessionLocal_2 = sessionmaker(autocommit=False, autoflush=False, bind=engine_2, class_=AsyncSession)
+Base_2 = declarative_base()
+
+DATABASE_PATH_3 = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "personen.db")
 DATABASE_URL_3 = f"sqlite+aiosqlite:///{DATABASE_PATH_3}"
 engine_3 = create_async_engine(DATABASE_URL_3, echo=True)
 SessionLocal_3 = sessionmaker(autocommit=False, autoflush=False, bind=engine_3, class_=AsyncSession)
 Base_3 = declarative_base()
 
 
-# Modelle für die zweite Datenbank
-class arbeitszeitenWeek(Base_3):
-    __tablename__ = "arbeitszeitenWeek"
-    Country = Column(String, primary_key=True, index=True)
-    Week = Column(Integer)
-    Hours_Worked = Column(Float)
-    # Weitere Spalten...
+# Model for the database
+def create_week_columns():
+    return {f"Week_{i}": Column(Float) for i in range(1, 40)}
 
-# Router
-router = APIRouter()
+class Arbeitszeiten_Tabelle(Base_2):
+    __tablename__ = "Arbeitszeiten_Tabelle"
+    ID = Column(Integer, primary_key=True, index=True)
+    Name = Column(String, index=True)
+
+    # Dynamically adding Week_1 to Week_39 columns
+    locals().update(create_week_columns())
+    
+class Personen_Tabelle(Base_3):
+    __tablename__ = "Personen_Tabelle"
+    personID = Column(Integer, primary_key=True, index=True)
+    ID = Column(Integer, index=True)
+    Name = Column(String)
+    Abteilung = Column(String)
+    Standort = Column(String)
+    Position = Column(String)
+    Projekt = Column(String)
+
+    # Dynamically adding Week_1 to Week_39 columns
+    locals().update(create_week_columns())    
+
+# Dependency for database session
+async def get_db_2():
+    async with SessionLocal_2() as session:
+        yield session
 
 # Dependency für die zweite Datenbank
 async def get_db_3():
     async with SessionLocal_3() as session:
         yield session
+        
+# Router setup
+router = APIRouter()
 
-
-@router.get("/Abteilung")
-async def get_arbeitszeiten_days(session: AsyncSession = Depends(get_db_3)):
-    """
-    Endpoint to get all columns and values from the arbeitszeitenDays table
-    :returns: Das ergebnis der Abfrage
-    """
-    query = select(person.personID, person.ID, person.Name,
-                   person.Abteilung, person.Standort, person.Position, person.Projekt)
+# Endpoint to get all data
+@router.get("/all-hours-worked")
+async def get_all_hours_worked(session: AsyncSession = Depends(get_db_2)):
+    query = select(Arbeitszeiten_Tabelle)
     result = await session.execute(query)
-    data = result.fetchall()
+    data = result.scalars().all()
 
     if not data:
         raise HTTPException(status_code=404, detail="No data found.")
 
     return [
-        {"personID": row[0],
-         "ID": row[1],
-         "Name": row[2],
-         "Abteilung": row[3],
-         "Standort": row[4],
-         "Position": row[5],
-         "Projekt": row[6]
+        {
+            "ID": row.ID,
+            "Name": row.Name,
+            **{f"Week {i}": getattr(row, f"Week_{i}") for i in range(1, 40)}
+        }
+        for row in data
+    ]
 
-         }
+
+@router.get("/Abteilung")
+async def get_all_hours_worked(session: AsyncSession = Depends(get_db_2)):
+    query = select(Arbeitszeiten_Tabelle, Personen_Tabelle)
+    result = await session.execute(query)
+    data = result.scalars().all()
+
+    if not data:
+        raise HTTPException(status_code=404, detail="No data found.")
+
+    return [
+        {
+            "ID": row.ID,
+            "Name": row.Name,
+            **{f"Week {i}": getattr(row, f"Week_{i}") for i in range(1, 40)}
+        }
+        for row in data
+    ]
+
+@router.get("/Abteilung")
+async def get_all_hours_worked(
+    session_arbeitszeiten: AsyncSession = Depends(get_db_2),
+    session_personen: AsyncSession = Depends(get_db_3)
+):
+    # Abfrage: Join zwischen Arbeitszeiten_Tabelle und Personen_Tabelle
+    query = (
+        select(
+            Arbeitszeiten_Tabelle.ID,
+            Arbeitszeiten_Tabelle.Name,
+            Personen_Tabelle.Abteilung,
+            Personen_Tabelle.Standort,
+            Personen_Tabelle.Position,
+            Personen_Tabelle.Projekt,
+            *[getattr(Arbeitszeiten_Tabelle, f"Week_{i}") for i in range(1, 40)]
+        )
+        .join(Personen_Tabelle, Arbeitszeiten_Tabelle.ID == Personen_Tabelle.ID)
+    )
+
+    result = await session_arbeitszeiten.execute(query)
+    data = result.fetchall()
+
+    if not data:
+        raise HTTPException(status_code=404, detail="No data found.")
+
+    # Rückgabeformat anpassen
+    return [
+        {
+            "ID": row.ID,
+            "Name": row.Name,
+            "Abteilung": row.Abteilung,
+            "Standort": row.Standort,
+            "Position": row.Position,
+            "Projekt": row.Projekt,
+            **{f"Week {i}": getattr(row, f"Week_{i}") for i in range(1, 40)}
+        }
         for row in data
     ]

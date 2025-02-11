@@ -23,11 +23,11 @@ df = pd.DataFrame(data)
 # Wochen-Spalten identifizieren
 weeks = [col for col in df.columns if col.startswith("Week")]
 
-# Durchschnitt der Arbeitsstunden pro Projekt berechnen
-df_avg = df.groupby("Projekt")[weeks].mean().reset_index()
+# Durchschnitt der Arbeitsstunden pro Position berechnen
+df_avg = df.groupby("Position")[weeks].mean().reset_index()
 
-# Anzahl der Personen pro Projekt berechnen
-projekt_counts = df["Projekt"].value_counts().to_dict()
+# Anzahl der Personen pro Position berechnen
+position_counts = df["Position"].value_counts().to_dict()
 
 # Farben definieren
 colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3"]
@@ -35,24 +35,24 @@ colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3"]
 # Liniendiagramm erstellen
 fig = go.Figure()
 
-# Für jedes Projekt eine Linie hinzufügen
-for i, projekt in enumerate(df_avg["Projekt"].unique()):
-    anzahl_personen = projekt_counts.get(projekt, 0)
+# Für jede Position eine Linie hinzufügen
+for i, position in enumerate(df_avg["Position"].unique()):
+    anzahl_personen = position_counts.get(position, 0)
     fig.add_trace(go.Scatter(
         x=weeks,
-        y=df_avg[df_avg["Projekt"] == projekt][weeks].values.flatten(),
+        y=df_avg[df_avg["Position"] == position][weeks].values.flatten(),
         mode='lines+markers',
-        name=f"{projekt} ({anzahl_personen} Personen)",  # Anzahl der Personen in der Legende
+        name=f"{position} ({anzahl_personen} Personen)",  # Anzahl der Personen in der Legende
         line=dict(color=colors[i % len(colors)])  # Farben zuweisen
     ))
 
 # Layout anpassen
 fig.update_layout(
-    title="Durchschnittliche Arbeitsstunden pro Woche nach Projekt",
+    title="Durchschnittliche Arbeitsstunden pro Woche nach Position",
     xaxis_title="Woche",
     yaxis_title="Arbeitsstunden",
     xaxis=dict(tickmode='linear'),
-    legend_title="Projekt (Anzahl Personen)",
+    legend_title="Position (Anzahl Personen)",
     height=600
 )
 

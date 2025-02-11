@@ -76,15 +76,15 @@ class Arbeitszeiten_ETL_Handler:
         # Umwandeln der Daten in ein langes Format (Melt)
         self._df_long = self._df.reset_index().melt(id_vars=['ID', 'Name'], var_name='Wochentag', value_name='Arbeitszeit')
 
-        # Gruppieren nach Woche und Berechnung des Durchschnitts
+        # Gruppieren nach Woche und Berechnung der Summe
         self._df_long['Week'] = (self._df_long.groupby(['ID', 'Name']).cumcount() // 5) + 1
-        self._df_avg = self._df_long.groupby(['ID', 'Name', 'Week'])['Arbeitszeit'].mean().unstack()
+        self._df_sum = self._df_long.groupby(['ID', 'Name', 'Week'])['Arbeitszeit'].sum().unstack()
 
         # Umbenennen der Spalten in "Week 1", "Week 2", usw.
-        self._df_avg.columns = [f'Week_{i}' for i in self._df_avg.columns]
+        self._df_sum.columns = [f'Week_{i}' for i in self._df_sum.columns]
 
         # Runden der Werte auf zwei Nachkommastellen
-        self._df_avg = self._df_avg.round(2)
+        self._df_sum = self._df_sum.round(2)
 
     # load ---------------------------------------------------------------------------------------------------------
 
@@ -100,7 +100,7 @@ class Arbeitszeiten_ETL_Handler:
         :param table_name: Name der Tabelle in der SQLite-Datenbank
         """
         with sqlite3.connect(db_name) as connection:
-            self._df_avg.to_sql(
+            self._df_sum.to_sql(
                 table_name, connection, if_exists='replace', index=True)
             connection.commit()
 

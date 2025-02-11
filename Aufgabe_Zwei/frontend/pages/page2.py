@@ -58,16 +58,29 @@ fig = go.Figure(data=go.Heatmap(
     x=weeks,         # Wochen auf der X-Achse
     y=names_sorted,  # Sortierte Namen auf der Y-Achse
     colorscale="Viridis",  # Farbschema
-    colorbar=dict(title="Arbeitsstunden")  # Legende
+    colorbar=dict(
+        title="Arbeitsstunden", 
+        tickmode="auto",    # Automatische Tick-Einstellung
+        ticks="outside",    # Ticks außerhalb anzeigen
+    )
 ))
 
 # Layout anpassen
 fig.update_layout(
-    title="Arbeitsstunden pro Woche (sortiert nach Gesamtarbeitszeit)",
+    title="             Arbeitsstunden pro Woche (sortiert nach Gesamtarbeitszeit)",
     xaxis_title="Woche",
     yaxis_title="Name",
-    xaxis_nticks=len(weeks),  # Anzahl der Wochenbeschriftungen
-    yaxis_nticks=len(names_sorted)   # Anzahl der Namensbeschriftungen
+    xaxis_nticks=len(weeks),
+    yaxis=dict(
+        automargin=True,
+        tickmode="array",
+        tickvals=list(range(len(names_sorted))),
+        ticktext=names_sorted,
+        tickangle=0,
+        tickfont=dict(size=10)
+    ),
+    margin=dict(l=150),
+    height=800
 )
 
 # Heatmap in Streamlit anzeigen

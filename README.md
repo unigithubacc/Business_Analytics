@@ -36,6 +36,7 @@ cd Aufgabe_Zwei\database
 ``` env\Scripts\activate ```
 
 > **frontend (streamlit) starten**
-``` streamlit frontend.py ```
+``` streamlit run frontend.py ```
+bzw. streamlit run Aufgabe_Zwei\frontend\frontend.py
 
 

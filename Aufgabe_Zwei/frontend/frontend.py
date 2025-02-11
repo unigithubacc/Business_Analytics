@@ -8,8 +8,7 @@ p3 = st.Page("pages/page3.py", title="Page 3", icon=":material/query_stats:")
 
 # install Multipage
 pg = st.navigation({
-    "Page 1": [p1],
-    "Page 2": [p2, p3],
+    "Pages": [p1, p2, p3],
 })
 pg.run()
 

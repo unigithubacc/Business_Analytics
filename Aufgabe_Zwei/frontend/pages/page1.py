@@ -32,7 +32,7 @@ def fetch_abteilung_data() -> dict:
         return {}
 
 
-st.title("Hello World page 2")
+st.title("Hello World page 1")
 
 
 

@@ -61,7 +61,13 @@ fig.update_layout(
     title="Arbeitsstunden pro Woche und Person (sortiert nach Gesamtarbeitszeit)",
     xaxis_title="Woche",
     yaxis_title="Mitarbeiter",
-    xaxis_nticks=len(week_columns),
+    xaxis=dict(
+        tickmode="array",
+        tickvals=list(range(len(week_columns))),
+        ticktext=week_columns,
+        tickangle=45,  # Optional: Drehen Sie die Beschriftungen für bessere Lesbarkeit
+        tickfont=dict(size=10)
+    ),
     yaxis=dict(
         automargin=True,
         tickmode="array",

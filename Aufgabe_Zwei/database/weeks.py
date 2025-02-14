@@ -1,10 +1,11 @@
 import os
 import sqlite3
 import pandas as pd
+from datetime import datetime
 
 class Arbeitszeiten_ETL_Handler:
     """
-        Klasse zum Einlesen einer CSV-Datei mit Arbeitszeiten und Speichern der Daten in einer SQLite-Datenbank.
+    Klasse zum Einlesen einer CSV-Datei mit Arbeitszeiten und Speichern der Daten in einer SQLite-Datenbank.
     :param _csv_path: Pfad zur CSV-Datei
     :param _df: DataFrame mit den Daten aus der CSV-Datei
     """
@@ -14,7 +15,7 @@ class Arbeitszeiten_ETL_Handler:
             _csv_path: str
     ):
         """
-            Initialisiert die Klasse mit dem Pfad zur CSV-Datei. 
+        Initialisiert die Klasse mit dem Pfad zur CSV-Datei. 
 
         :param _csv_path: Pfad zur CSV-Datei, welche die Arbeitszeiten enthält
         """
@@ -31,7 +32,7 @@ class Arbeitszeiten_ETL_Handler:
 
     def extract(self) -> None:
         """
-            Extrahiert die Daten aus der CSV-Datei und speichert sie in einem DataFrame.
+        Extrahiert die Daten aus der CSV-Datei und speichert sie in einem DataFrame.
         """
         self._df = pd.read_csv(
             self._csv_path,
@@ -42,7 +43,7 @@ class Arbeitszeiten_ETL_Handler:
 
     def transform(self) -> None:
         """
-            Transformiert die Arbeitszeitdaten und berechnet zusätzliche Werte.
+        Transformiert die Arbeitszeitdaten und berechnet zusätzliche Werte.
         """
         # Kopiere den DataFrame, um Fragmentierung zu vermeiden
         self._df = self._df.copy()
@@ -50,37 +51,29 @@ class Arbeitszeiten_ETL_Handler:
         # Füge eine Spalte 'id' hinzu, die eine eindeutige ID für jede Zeile enthält
         self._df.insert(0, 'ID', range(1, 1 + len(self._df)))
 
-        # Umwandeln der Datumsformat-Spalten in Wochentage (nur ab der zweiten Spalte)
-        self._df.columns = ['ID', 'Name'] + [pd.to_datetime(col, format='%d.%m.%Y').strftime('%A') for col in self._df.columns[2:]]
-
-        # Zähle die Vorkommen jedes Namens
-        name_counts = self._df['Name'].value_counts()
-        
-        # Falls ein Name doppelt vorkommt, füge Nummern hinzu
-        name_tracker = {}
-        
-        def modify_name(name):
-            if name_counts[name] > 1:  # Nur für doppelte Namen Nummern hinzufügen
-                if name in name_tracker:
-                    name_tracker[name] += 1
-                else:
-                    name_tracker[name] = 1
-                return f"{name}{name_tracker[name]}"
-            return name  # Falls der Name einzigartig ist, bleibt er unverändert
-
-        self._df['Name'] = self._df['Name'].astype(str).apply(modify_name)
-
-        # Setzen des Index auf die 'id' Spalte
-        self._df = self._df.set_index('ID')
+        # Umwandeln der Spaltenüberschriften in Datumswerte
+        date_columns = self._df.columns[2:]  # Spalten ab Index 2 sind Datumsangaben
+        self._df.columns = ['ID', 'Name'] + [pd.to_datetime(col, format='%d.%m.%Y') for col in date_columns]
 
         # Umwandeln der Daten in ein langes Format (Melt)
-        self._df_long = self._df.reset_index().melt(id_vars=['ID', 'Name'], var_name='Wochentag', value_name='Arbeitszeit')
+        self._df_long = self._df.melt(id_vars=['ID', 'Name'], var_name='Datum', value_name='Arbeitszeit')
 
-        # Gruppieren nach Woche und Berechnung der Summe
-        self._df_long['Week'] = (self._df_long.groupby(['ID', 'Name']).cumcount() // 5) + 1
-        self._df_sum = self._df_long.groupby(['ID', 'Name', 'Week'])['Arbeitszeit'].sum().unstack()
+        # Sicherstellen, dass die Spalte 'Datum' den Datentyp datetime hat
+        self._df_long['Datum'] = pd.to_datetime(self._df_long['Datum'])
 
-        # Umbenennen der Spalten in "Week 1", "Week 2", usw.
+        # Hinzufügen der Kalenderwoche (ISO-Woche)
+        self._df_long['Week'] = self._df_long['Datum'].dt.isocalendar().week
+
+        # Zählen der tatsächlichen Tage pro Woche
+        self._df_long['Tatsächliche_Tage'] = self._df_long.groupby(['ID', 'Name', 'Week'])['Datum'].transform('count')
+
+        # Normierung der Arbeitszeit auf eine 5-Tage-Woche
+        self._df_long['Korrigierte_Arbeitszeit'] = (self._df_long['Arbeitszeit'] / self._df_long['Tatsächliche_Tage']) * 5
+
+        # Gruppieren nach ID, Name und Woche, und Summe der korrigierten Arbeitszeiten berechnen
+        self._df_sum = self._df_long.groupby(['ID', 'Name', 'Week'])['Korrigierte_Arbeitszeit'].sum().unstack()
+
+        # Umbenennen der Spalten in "Week_1", "Week_2", usw.
         self._df_sum.columns = [f'Week_{i}' for i in self._df_sum.columns]
 
         # Runden der Werte auf zwei Nachkommastellen
@@ -94,7 +87,7 @@ class Arbeitszeiten_ETL_Handler:
             table_name: str
     ) -> None:
         """
-            Speichert die Daten in einer SQLite-Datenbank.
+        Speichert die Daten in einer SQLite-Datenbank.
 
         :param db_name: Name der SQLite-Datenbank
         :param table_name: Name der Tabelle in der SQLite-Datenbank
@@ -111,7 +104,7 @@ class DB_Handler:
             table_name: str
     ) -> None:
         """
-            Liest die Daten aus der SQLite-Datenbank und gibt sie als Tabelle aus.
+        Liest die Daten aus der SQLite-Datenbank und gibt sie als Tabelle aus.
 
         :param db_name: Name der SQLite-Datenbank
         :param table_name: Name der Tabelle in der SQLite-Datenbank

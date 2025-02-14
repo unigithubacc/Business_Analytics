@@ -91,7 +91,13 @@ fig.update_layout(
     title="Arbeitsstunden pro Wochentag und Person (sortiert nach Gesamtarbeitszeit)",
     xaxis_title="Name",
     yaxis_title="Wochentag",
-    xaxis_nticks=len(names_sorted),
+    xaxis=dict(
+        tickmode="array",
+        tickvals=list(range(len(names_sorted))),
+        ticktext=names_sorted,
+        nticks=len(names_sorted),  # Sicherstellen, dass alle Namen angezeigt werden
+        tickangle=45  # Optional: Neigung der Namen, um Überlappungen zu vermeiden
+    ),
     yaxis=dict(
         automargin=True,
         tickmode="array",
@@ -103,6 +109,7 @@ fig.update_layout(
     margin=dict(l=150, r=50, t=50, b=150),
     height=600
 )
+
 
 # Heatmap in Streamlit anzeigen
 st.plotly_chart(fig, use_container_width=True)

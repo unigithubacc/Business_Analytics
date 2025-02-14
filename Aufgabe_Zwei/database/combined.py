@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS combined (
     Week_36 REAL,
     Week_37 REAL,
     Week_38 REAL,
-    Week_39 REAL
+    Week_39 REAL,
+    Week_40 REAL
 )
 ''')
 conn2.commit()
@@ -65,7 +66,7 @@ cursor1.execute("SELECT ID, Name, Abteilung, Standort, Position, Projekt FROM Pe
 personen_data = cursor1.fetchall()
 
 # Read data from the second database (Arbeitszeiten_Tabelle)
-cursor2.execute("SELECT ID, Name, Week_1, Week_2, Week_3, Week_4, Week_5, Week_6, Week_7, Week_8, Week_9, Week_10, Week_11, Week_12, Week_13, Week_14, Week_15, Week_16, Week_17, Week_18, Week_19, Week_20, Week_21, Week_22, Week_23, Week_24, Week_25, Week_26, Week_27, Week_28, Week_29, Week_30, Week_31, Week_32, Week_33, Week_34, Week_35, Week_36, Week_37, Week_38, Week_39 FROM Arbeitszeiten_Tabelle")
+cursor2.execute("SELECT ID, Name, Week_1, Week_2, Week_3, Week_4, Week_5, Week_6, Week_7, Week_8, Week_9, Week_10, Week_11, Week_12, Week_13, Week_14, Week_15, Week_16, Week_17, Week_18, Week_19, Week_20, Week_21, Week_22, Week_23, Week_24, Week_25, Week_26, Week_27, Week_28, Week_29, Week_30, Week_31, Week_32, Week_33, Week_34, Week_35, Week_36, Week_37, Week_38, Week_39, Week_40 FROM Arbeitszeiten_Tabelle")
 arbeitszeiten_data = cursor2.fetchall()
 
 # Combine the data
@@ -92,8 +93,8 @@ INSERT INTO combined (
     Week_1, Week_2, Week_3, Week_4, Week_5, Week_6, Week_7, Week_8, Week_9, Week_10,
     Week_11, Week_12, Week_13, Week_14, Week_15, Week_16, Week_17, Week_18, Week_19, Week_20,
     Week_21, Week_22, Week_23, Week_24, Week_25, Week_26, Week_27, Week_28, Week_29, Week_30,
-    Week_31, Week_32, Week_33, Week_34, Week_35, Week_36, Week_37, Week_38, Week_39
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    Week_31, Week_32, Week_33, Week_34, Week_35, Week_36, Week_37, Week_38, Week_39, Week_40
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ''', combined_data)
 
 # Save changes and close connections

@@ -64,8 +64,14 @@ class Arbeitszeiten_ETL_Handler:
         # Hinzufügen der Kalenderwoche (ISO-Woche)
         self._df_long['Week'] = self._df_long['Datum'].dt.isocalendar().week
 
-        # Gruppieren nach ID, Name und Woche, und Summe der Arbeitszeiten berechnen
-        self._df_sum = self._df_long.groupby(['ID', 'Name', 'Week'])['Arbeitszeit'].sum().unstack()
+        # Zählen der tatsächlichen Tage pro Woche
+        self._df_long['Tatsächliche_Tage'] = self._df_long.groupby(['ID', 'Name', 'Week'])['Datum'].transform('count')
+
+        # Normierung der Arbeitszeit auf eine 5-Tage-Woche
+        self._df_long['Korrigierte_Arbeitszeit'] = (self._df_long['Arbeitszeit'] / self._df_long['Tatsächliche_Tage']) * 5
+
+        # Gruppieren nach ID, Name und Woche, und Summe der korrigierten Arbeitszeiten berechnen
+        self._df_sum = self._df_long.groupby(['ID', 'Name', 'Week'])['Korrigierte_Arbeitszeit'].sum().unstack()
 
         # Umbenennen der Spalten in "Week_1", "Week_2", usw.
         self._df_sum.columns = [f'Week_{i}' for i in self._df_sum.columns]

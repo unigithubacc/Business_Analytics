@@ -3,16 +3,6 @@ import requests
 import plotly.graph_objects as go
 import pandas as pd
 
-
-@st.cache_data
-def fetch_arbeitszeiten_days_data() -> dict:
-    response = requests.get('http://localhost:8000/arbeitszeiten-days')
-    if response.status_code == 200:
-        return response.json()
-    else:
-        st.error("Error fetching data.")
-        return {}
-
 @st.cache_data
 def fetch_all_hours_worked_data() -> dict:
     response = requests.get('http://localhost:8000/all-hours-worked')
@@ -22,64 +12,59 @@ def fetch_all_hours_worked_data() -> dict:
         st.error("Error fetching data.")
         return {}
 
-@st.cache_data
-def fetch_abteilung_data() -> dict:
-    response = requests.get('http://localhost:8000/Abteilung')
-    if response.status_code == 200:
-        return response.json()
-    else:
-        st.error("Error fetching data.")
-        return {}
-
-
-
 # Daten abrufen
 data = fetch_all_hours_worked_data()
 
-# Daten in ein DataFrame umwandeln
+# In DataFrame umwandeln
 df = pd.DataFrame(data)
 
-# Spalten für die Wochen extrahieren
-weeks = [col for col in df.columns if col.startswith("Week")]
+# Wochen-Spalten identifizieren
+week_columns = [col for col in df.columns if col.startswith("Week")]
 
-# Summe der Arbeitsstunden pro Person berechnen
-df["Total Hours"] = df[weeks].sum(axis=1)
+# Doppelte Namen eindeutig machen
+name_counts = {}
+def unique_name(name):
+    if name in name_counts:
+        name_counts[name] += 1
+        return f"{name}{name_counts[name]}"
+    else:
+        name_counts[name] = 0
+        return name
 
-# Nach der Gesamtarbeitszeit absteigend sortieren
-df_sorted = df.sort_values(by="Total Hours", ascending=False)
+df["Unique Name"] = df["Name"].apply(unique_name)
+names = df["Unique Name"].tolist()
 
-# Heatmap-Daten vorbereiten
-heatmap_data = df_sorted[weeks].values
-names_sorted = df_sorted["Name"]
+# Heatmap-Daten vorbereiten (Transponieren für richtige Ausrichtung)
+heatmap_data = df[week_columns].values  # Reihenfolge bleibt gleich
 
 # Heatmap mit Plotly erstellen
 fig = go.Figure(data=go.Heatmap(
-    z=heatmap_data,  # Arbeitsstunden
-    x=weeks,         # Wochen auf der X-Achse
-    y=names_sorted,  # Sortierte Namen auf der Y-Achse
-    colorscale="Viridis",  # Farbschema
+    z=heatmap_data,          # Arbeitsstunden
+    x=week_columns,          # Wochen auf der X-Achse
+    y=names,                 # Eindeutige Namen auf der Y-Achse
+    colorscale="Viridis",   # Farbschema
     colorbar=dict(
         title="Arbeitsstunden", 
         tickmode="auto",    # Automatische Tick-Einstellung
-        ticks="outside",    # Ticks außerhalb anzeigen
+        ticks="outside"     # Ticks außerhalb anzeigen
     )
 ))
 
 # Layout anpassen
 fig.update_layout(
-    title="             Arbeitsstunden pro Woche (sortiert nach Gesamtarbeitszeit)",
+    title="Arbeitsstunden pro Woche und Person",
     xaxis_title="Woche",
-    yaxis_title="Name",
-    xaxis_nticks=len(weeks),
+    yaxis_title="Mitarbeiter",
+    xaxis_nticks=len(week_columns),
     yaxis=dict(
         automargin=True,
         tickmode="array",
-        tickvals=list(range(len(names_sorted))),
-        ticktext=names_sorted,
+        tickvals=list(range(len(names))),
+        ticktext=names,
         tickangle=0,
         tickfont=dict(size=10)
     ),
-    margin=dict(l=150),
+    margin=dict(l=150, r=50, t=50, b=150),
     height=800
 )
 

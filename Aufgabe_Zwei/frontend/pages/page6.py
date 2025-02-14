@@ -45,6 +45,7 @@ for i, abteilung in enumerate(df_avg["Abteilung"]):
         y=[df_avg.loc[df_avg["Abteilung"] == abteilung, "Average_Stunden"].values[0]],
         name=f"{abteilung} ({anzahl_personen} Personen)",  # Legendenname mit Anzahl der Personen
         marker=dict(color=colors[i % len(colors)]),  # Farbe zuweisen
+        width=0.7,  # Balkenbreite
         showlegend=True  # Legende für diese Spur anzeigen
     ))
 
@@ -63,7 +64,7 @@ fig.update_layout(
         tickfont=dict(size=12)  # Schriftgröße der Y-Achsen-Beschriftung
     ),
     height=700,  # Höhe des Diagramms anpassen
-    width=1000,  # Breite des Diagramms anpassen
+    width=700,  # Breite des Diagramms anpassen
     legend=dict(
         title="Abteilungen (Anzahl Personen)",
         font=dict(size=12)  # Schriftgröße der Legende

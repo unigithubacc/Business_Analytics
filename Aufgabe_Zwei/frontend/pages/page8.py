@@ -32,7 +32,7 @@ df_avg["Average_Stunden"] = df_avg[weeks].mean(axis=1)
 df_avg = df_avg.sort_values(by="Average_Stunden", ascending=False)
 
 # Farben definieren
-colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628"]
+colors = ["#1b9e77", "#d95f02", "#7570b3", "#984ea3", "#ff7f00", "#ffff33", "#a65628"]
 
 # Balkendiagramm erstellen
 fig = go.Figure()

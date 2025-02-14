@@ -74,5 +74,25 @@ fig.update_layout(
     height=800
 )
 
+# Funktion zum Hinzufügen eines roten Rahmens um eine spezifische Zelle
+def add_red_border(fig, x_coord, y_coord):
+    fig.add_shape(
+        type="rect",
+        x0=x_coord - 0.5, y0=y_coord - 0.5,
+        x1=x_coord + 0.5, y1=y_coord + 0.5,
+        line=dict(color="red", width=2),
+        fillcolor="rgba(0,0,0,0)",
+        layer="above"
+    )
+
+# Koordinaten für die spezifischen Zellen finden
+week_index = week_columns.index("Week 40")
+abdurrahim_index = names_sorted.index("Abdurrahim")
+anil_index = names_sorted.index("Anil")
+
+# Rote Rahmen hinzufügen
+add_red_border(fig, week_index, abdurrahim_index)
+add_red_border(fig, week_index, anil_index)
+
 # Heatmap in Streamlit anzeigen
 st.plotly_chart(fig, use_container_width=True)

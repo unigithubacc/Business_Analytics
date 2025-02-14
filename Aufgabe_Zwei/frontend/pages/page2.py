@@ -21,6 +21,12 @@ df = pd.DataFrame(data)
 # Wochen-Spalten identifizieren
 week_columns = [col for col in df.columns if col.startswith("Week")]
 
+# Gesamtarbeitszeit pro Person berechnen
+df["Total Hours"] = df[week_columns].sum(axis=1)
+
+# Nach der Gesamtarbeitszeit absteigend sortieren
+df_sorted = df.sort_values(by="Total Hours", ascending=False)
+
 # Doppelte Namen eindeutig machen
 name_counts = {}
 def unique_name(name):
@@ -31,17 +37,17 @@ def unique_name(name):
         name_counts[name] = 0
         return name
 
-df["Unique Name"] = df["Name"].apply(unique_name)
-names = df["Unique Name"].tolist()
+df_sorted["Unique Name"] = df_sorted["Name"].apply(unique_name)
+names_sorted = df_sorted["Unique Name"].tolist()
 
 # Heatmap-Daten vorbereiten (Transponieren für richtige Ausrichtung)
-heatmap_data = df[week_columns].values  # Reihenfolge bleibt gleich
+heatmap_data = df_sorted[week_columns].values  # Reihenfolge bleibt gleich
 
 # Heatmap mit Plotly erstellen
 fig = go.Figure(data=go.Heatmap(
     z=heatmap_data,          # Arbeitsstunden
     x=week_columns,          # Wochen auf der X-Achse
-    y=names,                 # Eindeutige Namen auf der Y-Achse
+    y=names_sorted,          # Sortierte eindeutige Namen auf der Y-Achse
     colorscale="Viridis",   # Farbschema
     colorbar=dict(
         title="Arbeitsstunden", 
@@ -52,15 +58,15 @@ fig = go.Figure(data=go.Heatmap(
 
 # Layout anpassen
 fig.update_layout(
-    title="Arbeitsstunden pro Woche und Person",
+    title="Arbeitsstunden pro Woche und Person (sortiert nach Gesamtarbeitszeit)",
     xaxis_title="Woche",
     yaxis_title="Mitarbeiter",
     xaxis_nticks=len(week_columns),
     yaxis=dict(
         automargin=True,
         tickmode="array",
-        tickvals=list(range(len(names))),
-        ticktext=names,
+        tickvals=list(range(len(names_sorted))),
+        ticktext=names_sorted,
         tickangle=0,
         tickfont=dict(size=10)
     ),

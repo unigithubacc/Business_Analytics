@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from typing import List
 
 # Database configuration
-DATABASE_PATH_2 = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "arbeitszeitenWeek.db")
+DATABASE_PATH_2 = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "ETL", "arbeitszeitenWeek.db")
 DATABASE_URL_2 = f"sqlite+aiosqlite:///{DATABASE_PATH_2}"
 engine_2 = create_async_engine(DATABASE_URL_2, echo=True)
 SessionLocal_2 = sessionmaker(autocommit=False, autoflush=False, bind=engine_2, class_=AsyncSession)

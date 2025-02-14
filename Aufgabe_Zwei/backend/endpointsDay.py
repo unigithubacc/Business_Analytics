@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 from typing import List
 
 # Absolute path to the database file
-DATABASE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "arbeitszeitenDays.db")
+DATABASE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "ETL", "arbeitszeitenDays.db")
 
 # Database URL to the absolute path
 DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_PATH}"

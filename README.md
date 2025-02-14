@@ -23,7 +23,7 @@
 > **env Verzeichnis aktivieren**
 ``` env\Scripts\activate ```
 
-> **backend (FastAPI) starten** 
+> **backend (FastAPI) starten**  im Business_Analytics Verzeichnis
 ``` uvicorn Aufgabe_Zwei.main:app --reload ```
 
 ### Frontend starten:

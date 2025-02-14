@@ -12,8 +12,6 @@ def fetch_abteilung_data() -> dict:
         st.error("Error fetching data.")
         return {}
 
-st.title("Hello World Page 3")
-
 # Daten abrufen
 data = fetch_abteilung_data()
 

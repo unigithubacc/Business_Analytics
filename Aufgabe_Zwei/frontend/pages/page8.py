@@ -21,12 +21,12 @@ df = pd.DataFrame(data)
 # Wochen-Spalten identifizieren
 weeks = [col for col in df.columns if col.startswith("Week")]
 
-# Anzahl der Personen pro Position berechnen
-position_counts = df["Position"].value_counts().to_dict()
-
 # Durchschnittliche Arbeitsstunden pro Woche pro Position berechnen
 df_avg = df.groupby("Position")[weeks].mean().reset_index()
 df_avg["Average_Stunden"] = df_avg[weeks].mean(axis=1)
+
+# Anzahl der Personen pro Position berechnen
+position_counts = df["Position"].value_counts().to_dict()
 
 # Nach Durchschnitt sortieren
 df_avg = df_avg.sort_values(by="Average_Stunden", ascending=False)
@@ -39,11 +39,11 @@ fig = go.Figure()
 
 # Für jede Position eine separate Spur erstellen
 for i, position in enumerate(df_avg["Position"]):
-    anzahl = position_counts.get(position, 0)  # Anzahl der Personen für diese Position
+    anzahl_personen = position_counts.get(position, 0)  # Anzahl der Personen in der Position
     fig.add_trace(go.Bar(
         x=[position],  # Nur eine Position pro Spur
         y=[df_avg.loc[df_avg["Position"] == position, "Average_Stunden"].values[0]],
-        name=f"{position} ({anzahl} Personen)",  # Legendenname mit Anzahl der Personen
+        name=f"{position} ({anzahl_personen} Personen)",  # Legendenname mit Anzahl der Personen
         marker=dict(color=colors[i % len(colors)]),
         width=0.7,  # Balkenbreite
         showlegend=True  # Legende für diese Spur anzeigen
@@ -66,7 +66,7 @@ fig.update_layout(
     height=700,  # Höhe des Diagramms
     width=500,  # Breite des Diagramms
     legend=dict(
-        title="Positionen (Anzahl der Personen)",
+        title="Positionen",
         font=dict(size=12)  # Schriftgröße der Legende
     ),
     barmode='group'  # Balken gruppieren

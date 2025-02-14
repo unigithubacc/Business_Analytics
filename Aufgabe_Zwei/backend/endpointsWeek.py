@@ -67,7 +67,7 @@ async def get_all_hours_worked(session: AsyncSession = Depends(get_db_2)):
                 f"Week {i}": (
                     20.87 if row.ID == 9 and i == 1 else  # Für ID 5 Khyalla, Week_40 auf 20 setzen
                     24.87 if row.ID == 5 and i == 40 else  # Für ID 5 Abdurrahim, Week_40 auf 20 setzen
-                    80.78 if row.ID == 25 and i == 40 else  # Für ID 26 Anil, Week_40 auf 89.3 setzen                    
+                    80.78 if row.ID == 25 and i == 40 else  # Für ID 25 Abdulhalim , Week_40 auf 89.3 setzen                    
                     80.78 if row.ID == 26 and i == 40 else  # Für ID 26 Anil, Week_40 auf 89.3 setzen
                     getattr(row, f"Week_{i}")  # Standardwert aus der DB
                 )

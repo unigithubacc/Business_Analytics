@@ -12,8 +12,6 @@ def fetch_abteilung_data() -> dict:
         st.error("Error fetching data.")
         return {}
 
-st.title("Hello World Page 3")
-
 # Daten abrufen
 data = fetch_abteilung_data()
 
@@ -23,38 +21,38 @@ df = pd.DataFrame(data)
 # Wochen-Spalten identifizieren
 weeks = [col for col in df.columns if col.startswith("Week")]
 
-# Durchschnitt der Arbeitsstunden pro Standort berechnen
-df_avg = df.groupby("Standort")[weeks].mean().reset_index()
+# Durchschnittliche Arbeitsstunden pro Woche pro Abteilung berechnen
+df_avg = df.groupby("Abteilung")[weeks].mean().reset_index()
+df_avg["Average_Stunden"] = df_avg[weeks].mean(axis=1)
 
-# Anzahl der Personen pro Standort berechnen
-standort_counts = df["Standort"].value_counts().to_dict()
+# Nach Durchschnitt sortieren
+df_avg = df_avg.sort_values(by="Average_Stunden", ascending=False)
+
+# Anzahl der Personen pro Abteilung berechnen
+abteilung_counts = df["Abteilung"].value_counts().to_dict()
 
 # Farben definieren
-colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3"]
+colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628"]
 
-# Liniendiagramm erstellen
+# Balkendiagramm erstellen
 fig = go.Figure()
-
-# Für jeden Standort eine Linie hinzufügen
-for i, standort in enumerate(df_avg["Standort"].unique()):
-    anzahl_personen = standort_counts.get(standort, 0)
-    fig.add_trace(go.Scatter(
-        x=weeks,
-        y=df_avg[df_avg["Standort"] == standort][weeks].values.flatten(),
-        mode='lines+markers',
-        name=f"{standort} ({anzahl_personen} Personen)",  # Anzahl der Personen in der Legende
-        line=dict(color=colors[i % len(colors)])  # Farben zuweisen
-    ))
+fig.add_trace(go.Bar(
+    x=df_avg["Abteilung"],
+    y=df_avg["Average_Stunden"],
+    text=[f"{abteilung} ({abteilung_counts.get(abteilung, 0)} Personen)" for abteilung in df_avg["Abteilung"]],
+    textposition='auto',
+    marker=dict(color=colors[:len(df_avg["Abteilung"])])
+))
 
 # Layout anpassen
 fig.update_layout(
-    title="Durchschnittliche Arbeitsstunden pro Woche nach Standort",
-    xaxis_title="Woche",
-    yaxis_title="Arbeitsstunden",
-    xaxis=dict(tickmode='linear'),
-    legend_title="Standort (Anzahl Personen)",
-    height=600
+    title="Durchschnittliche Arbeitsstunden pro Woche pro Abteilung",
+    xaxis_title="Abteilung",
+    yaxis_title="Durchschnittliche Arbeitsstunden",
+    xaxis=dict(tickmode='array', tickangle=45),
+    height=600,
+    legend_title="Abteilungen"
 )
 
-# Liniendiagramm in Streamlit anzeigen
+# Balkendiagramm in Streamlit anzeigen
 st.plotly_chart(fig, use_container_width=True)

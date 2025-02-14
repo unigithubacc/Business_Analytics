@@ -1,7 +1,5 @@
 # Business_Analytics
 
-cd Aufgabe_Zwei\database 
-
 ## Installation und Start
 ### Projekt installation:
 > **Virtuale Umgebung erzeugen**
@@ -18,11 +16,8 @@ cd Aufgabe_Zwei\database
 ``` env\Scripts\activate ```
 
 > **ETL ausführen**
-``` python python weeks.py ```
-``` python days.py ```
-``` python person.py ```
-``` python combined.py```
-
+``` cd Aufgabe_Zwei\database ``` 
+``` python ETL.py ```
 
 ### Backend starten:
 > **env Verzeichnis aktivieren**
@@ -36,7 +31,6 @@ cd Aufgabe_Zwei\database
 ``` env\Scripts\activate ```
 
 > **frontend (streamlit) starten**
-``` streamlit run frontend.py ```
-bzw. streamlit run Aufgabe_Zwei\frontend\frontend.py
+``` streamlit run Aufgabe_Zwei\frontend\frontend.py ```
 
 

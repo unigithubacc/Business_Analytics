@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np  # NumPy für effiziente Array-Manipulation
 
 @st.cache_data
 def fetch_arbeitszeiten_days_data() -> dict:
@@ -30,6 +31,17 @@ def fetch_abteilung_data() -> dict:
         st.error("Error fetching data.")
         return {}
 
+# Funktion zum Hinzufügen eines roten Rahmens um bestimmte Felder
+def add_red_border(fig, x_coord, y_coord):
+    fig.add_shape(
+        type="rect",
+        x0=x_coord - 0.5, y0=y_coord - 0.5,
+        x1=x_coord + 0.5, y1=y_coord + 0.5,
+        line=dict(color="red", width=2),
+        fillcolor="rgba(0,0,0,0)",
+        layer="above"
+    )
+
 # Daten abrufen
 data = fetch_arbeitszeiten_days_data()
 
@@ -46,7 +58,15 @@ df["Total Hours"] = df[weekdays].sum(axis=1)
 df_sorted = df.sort_values(by="Total Hours", ascending=False)
 
 # Heatmap-Daten vorbereiten (Transponiert, um Namen auf der X-Achse und Wochentage auf der Y-Achse anzuzeigen)
-heatmap_data = df_sorted[weekdays].T.values  # Transposition
+heatmap_data = np.array(df_sorted[weekdays].T.values)  # Sicherstellen, dass es ein NumPy-Array ist
+
+# Speichere die ursprünglichen Nullpositionen, bevor sie zu 5 geändert werden
+zero_positions = np.where(heatmap_data == 0)
+
+# Nullwerte durch 5 ersetzen
+heatmap_data[zero_positions] = 4.05
+
+# Namen der sortierten Personen extrahieren
 names_sorted = df_sorted["Name"].tolist()
 
 # Heatmap mit Plotly erstellen
@@ -61,6 +81,10 @@ fig = go.Figure(data=go.Heatmap(
         ticks="outside"     # Ticks außerhalb anzeigen
     )
 ))
+
+# Rote Rahmen um alle vorherigen Nullwerte (jetzt 5) hinzufügen
+for y_index, x_index in zip(*zero_positions):
+    add_red_border(fig, x_index, y_index)
 
 # Layout anpassen
 fig.update_layout(

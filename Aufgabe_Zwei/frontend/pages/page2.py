@@ -86,13 +86,19 @@ def add_red_border(fig, x_coord, y_coord):
     )
 
 # Koordinaten für die spezifischen Zellen finden
-week_index = week_columns.index("Week 40")
+first_week_index = week_columns.index("Week 1")
+last_week_index = week_columns.index("Week 40")
+
 abdurrahim_index = names_sorted.index("Abdurrahim")
 anil_index = names_sorted.index("Anil")
+abdulhalim_index = names_sorted.index("Abdulhalim")
+khyalla_index = names_sorted.index("Khyalla")
 
 # Rote Rahmen hinzufügen
-add_red_border(fig, week_index, abdurrahim_index)
-add_red_border(fig, week_index, anil_index)
+add_red_border(fig, last_week_index, abdurrahim_index)
+add_red_border(fig, last_week_index, anil_index)
+add_red_border(fig, last_week_index, abdulhalim_index)
+add_red_border(fig, first_week_index, khyalla_index)
 
 # Heatmap in Streamlit anzeigen
 st.plotly_chart(fig, use_container_width=True)

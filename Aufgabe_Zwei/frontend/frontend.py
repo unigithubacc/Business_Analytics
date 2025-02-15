@@ -10,10 +10,11 @@ p5 = st.Page("pages/page5.py", title="Page 5 Linien", icon=":material/query_stat
 p6 = st.Page("pages/page6.py", title="Page 6 Balken", icon=":material/query_stats:")
 p7 = st.Page("pages/page7.py", title="Page 7", icon=":material/query_stats:")
 p8 = st.Page("pages/page8.py", title="Page 8 Balken von 4", icon=":material/query_stats:")
+p9 = st.Page("pages/page9.py", title="Page 9", icon=":material/query_stats:")
 
 # install Multipage
 pg = st.navigation({
-    "Pages": [p1, p2, p3, p4, p5, p6, p7, p8],
+    "Pages": [p1, p2, p3, p4, p5, p6, p7, p8, p9],
 })
 pg.run()
 
